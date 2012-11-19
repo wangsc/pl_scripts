@@ -47,7 +47,7 @@ my $r_script = $chromosome . "_temp.R";
 open (TR, ">$r_script") or die "can't open file $r_script\n";
 print TR '#!/usr/bin/env Rscript', "\n";
 my $pdffile = 'Chromosome_' . $chromosome . ".pdf";
-print TR "pdf(\"$pdffile\")\n";
+print TR "pdf(\"$pdffile\", width=5, height=5)\n";
 my @gd = map{$_->[2], $_->[3]} @data_points;
 my ($min, $max) = min_max(@gd);
 print TR "plot(1, type=\"n\", axes=T, xlim=c(0, $max), xlab=\"Position (cM)\", ylim=c(-0.02, 1), ylab=\"Frequency\")\n";
@@ -60,7 +60,7 @@ foreach (@data_points)
 	#print join(" ", @$_), "\n" unless $_->[0] >= $_->[2] and $_->[0] <= $_->[3];
 	push @pointx, $_->[0];
 	push @pointy, $_->[1];
-	my $col = $_->[4] >= $phs_perc_value?"\"red\"":"\"black\"";
+	my $col = $_->[4] >= $phs_perc_value?"\"red\"":"\"lightgrey\"";
 	push @point_color, $col;
 	push @line_seg, [$_->[2], $_->[1], $_->[3], $_->[1], $_->[4]] unless $_->[2] eq 'NA' or $_->[3] eq 'NA';
 }
@@ -74,7 +74,7 @@ foreach (@line_seg)
 	my @arr = @$_;
 	my $phs = pop @arr;
 	$count++ if $phs >= $phs_perc_value;
-	my $col = $phs >= $phs_perc_value?"\"red\"":"\"black\"";
+	my $col = $phs >= $phs_perc_value?"\"red\"":"\"lightgrey\"";
 	print TR "segments(", join(",", @arr), ",col=", $col, ")\n";
 }
 print "Chromosome ", $chromosome, "\t", $count, "\n";

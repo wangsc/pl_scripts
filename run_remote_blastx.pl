@@ -47,7 +47,7 @@ sub run_blast
 				if (! ref($rc))
 				{
 					$factory->remove_rid($rid) if $rc < 0;
-					sleep 5;
+					sleep 2;
 				}
 				else
 				{

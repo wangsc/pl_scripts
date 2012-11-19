@@ -90,24 +90,28 @@ sub read_index_fastq
 	foreach my $read_id (keys %return)
 	{
 		my $seq = $return{$read_id};
-		$seq =~ s/^[^ATGCatgc]//g;
-		$seq =~ s/[^ATGCatgc]$//g;
 		$seq = uc($seq);
 		my @acc_ids;
+		my %acc_match;
+		my $max_match = 0;
 		foreach my $index_seq (keys %{$sample_index_ref})
 		{
 			my $acc = $sample_index_ref->{$index_seq};
 			$index_seq = uc($index_seq);
-			if($index_seq =~ /$seq/)
-			{
-				push @acc_ids, $acc;
-			}
+			my $m = match($index_seq, $seq);
+			$max_match = $m if $m >$max_match;
+			$acc_match{$acc} = $m;
+		}
+		
+		foreach (keys %acc_match)
+		{
+			push @acc_ids, $_ if $acc_match{$_} == $max_match and $max_match >= ((length $seq) - 2);
 		}
 		
 		if(@acc_ids >1)
 		{
 			print STDERR "! Read $read_id has ambiguous accession ID: ", join(" ", @acc_ids), "\n";
-			$return{$read_id} = "NA";
+			#$return{$read_id} = "NA";
 		}
 		else
 		{
@@ -116,6 +120,20 @@ sub read_index_fastq
 	}
 	
 	return %return;
+}
+
+sub match
+{
+	my ($sa, $sb) = @_;
+	my @sa=split //, $sa;
+	my @sb=split //, $sb;
+	
+	my $return = 0;
+	foreach (0..$#sa)
+	{
+		$return ++ if $sa[$_] eq $sb[$_]
+	}
+	return $return;
 }
 
 sub separate_read_fastq_files

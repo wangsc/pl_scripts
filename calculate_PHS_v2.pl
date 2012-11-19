@@ -248,7 +248,7 @@ sub group_acc_pair_according_to_allele
 	foreach my $acc (@$accs_ref)
 	{
 		my $allele = $genotype_hashref->{$acc}{$mapped_marker->{$chr}->[$index]};
-		next if $allele =~ /NA/;
+		next if $allele eq "NA";
 		push @{$group_hash{$allele}}, $acc;
 	}
 	if(keys %group_hash > 2){die "More than 2 alleles\n", join("\n",(keys %group_hash)),"\n"; }

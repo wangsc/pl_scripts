@@ -59,11 +59,11 @@ foreach my $seq_id (keys %parse_blast)
 	my $start = abs($frame) - 1;
 	$start = 0 if $pep_start_end->[0] != -1;
 	my $peptide = translate($seq, $frame, $start);
-	if ($seq_id =~ /S6297/)
-	{
-		print STDERR "S6297 ", join("\t", (@{$pep_start_end}, $frame)), "\n";
-		print STDERR $peptide, "\n";
-	}
+	#if ($seq_id =~ /S6297/)
+	#{
+	#	print STDERR "S6297 ", join("\t", (@{$pep_start_end}, $frame)), "\n";
+	#	print STDERR $peptide, "\n";
+	#}
 #	print STDERR ">$seq_id", "\n", $peptide, "\n"; last;
 	my $pep_len = length $peptide;
 	my @stop_pos;
@@ -80,6 +80,7 @@ foreach my $seq_id (keys %parse_blast)
 	{
 		print OUT $seq_id, "\t", "No Stop_codon\n";
 	}
+	print STDERR $seq_id, "\t", $frame, "\n";
 }
 close OUT;
 

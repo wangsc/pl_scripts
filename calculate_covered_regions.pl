@@ -14,8 +14,8 @@ my %ctg_length = read_fasta_file($fasta_file);
 my %covered_length = read_blat_files(\%ctg_length, $min_sim, $min_len, @blat_files);
 foreach (keys %ctg_length)
 {
-	print $_,"\t", exists $covered_length{$_}?$covered_length{$_}:0,
-	      "\t", $ctg_length{$_},"\n";
+	my $covered = exists $covered_length{$_}?$covered_length{$_}:0;
+	print $_,"\t", $covered, "\t", $ctg_length{$_},"\t", $covered/$ctg_length{$_}, "\n";
 }
 
 # Subroutines
@@ -56,13 +56,13 @@ sub read_blat_files
 		open (IN, $file) or die;
 		while (<IN>)
 		{
-	    # MERCURE_0135:4:1101:4228:2000#CGATGT/1  CAP11_mira1_rep_c6054   100.00  100     0       0       2       101     303     402     1.6e-50 197.0
+	    # BobWhite_mira1_c1       3934886 74.84   465     1     0       230     694     4287    3823    1.9e-149        526.0
 			next if /^\s+$/;
 			my @t = split /\s+/,$_;
 			next unless $t[2]>= $min_sim and $t[3]>= $min_len;
 			print STDERR '$id in blat: ', $t[1],"\n" if $debug; $debug=0;
 			#push @{$covered_regions{$t[0]}}, [@t[6, 7]];
-			construct_vec(\%covered_regions, $t[1], sort{$a<=>$b}@t[8, 9]);
+			construct_vec(\%covered_regions, $t[0], sort{$a<=>$b}@t[6, 7]);
 		}
 		close IN;		
 	}
@@ -76,7 +76,8 @@ sub calculate_covered_length
 	foreach my $id (keys %$covered_ref)
 	{
 		my $vec = $covered_ref -> {$id};
-		die "No length for $id \n" unless exists $length_ref->{$id};
+		print STDERR "No length for $id \n" unless exists $length_ref->{$id};
+		next unless exists $length_ref->{$id};
 		my $len = 0;
 		#print STDERR "length of contig $id :", $length_ref->{$id}, "\n";
 		foreach (1..$length_ref->{$id})

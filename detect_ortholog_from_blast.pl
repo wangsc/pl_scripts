@@ -3,8 +3,8 @@ use strict;
 use Bio::SearchIO;
 
 my $blast_file = shift or die "perl $0 blast_result\n";
-
-my %orthologs = parse_blast_results($blast_file);
+my $format = 'blastx';
+my %orthologs = parse_blast_results($blast_file, $format);
 
 foreach my $id (keys %orthologs)
 {
@@ -15,8 +15,9 @@ foreach my $id (keys %orthologs)
 sub parse_blast_results
 {
 	my $file = shift;
+	my $format = shift;
 	my %return_hash;
-	my $searchio = Bio::SearchIO->new(-format => 'blast', file => "$file" );
+	my $searchio = Bio::SearchIO->new(-format => $format, file => "$file" );
 	while (my $result = $searchio->next_result())
 	{
 		last unless defined $result;
@@ -38,7 +39,8 @@ sub parse_blast_results
 			$aligned_len += $hsp->length('query');
 		}
 		next unless defined $aligned_len;
-		$cip = 3*$id_len/$aligned_len;
+		$cip = $id_len/$aligned_len;
+		$cip *= 3 if $format eq 'blastx';
 		$calp = $aligned_len/($query_length);
 		#print STDERR '$cip ', $cip,"\n", '$calp ', $calp,"\n";
 		push @{$return_hash{$query_name}}, $hit_name if $cip >=0.6 and $calp>=0.7; # $cip >=0.6 and $calp>=0.7

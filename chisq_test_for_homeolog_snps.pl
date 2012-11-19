@@ -5,25 +5,27 @@ use Statistics::ChisqIndep;
 my $sUsage = qq(
 
 perl $0 
-<homeolog_variation_sites.out>
-<vcf file>
+<Grandin_rmdup_allele_freq.out>
+<snps_fitBinomTest.list>
 <minimum coverage depth>
 <output file>
 );
 
 die $sUsage unless @ARGV >= 4;
-my ($variation_file, $vcf_file, $mid_dep, $output) = @ARGV;
+my ($acc_allele_freq_file, $snp_file, $dp_cutoff, $output) = @ARGV;
 
 my $chisq_test = new Statistics::ChisqIndep;
-my %snps = read_homeolog_variations($variation_file);
+my %snps = read_homeolog_variations($snp_file);
 open (OUT, ">$output") or die;
 print OUT join("\t", qw(SNP Allele_A Allele_B Depth_A Depth_B Pvalue1 Pvalue2)), "\n";
 
-open (V, "$vcf_file") or die;
+open (V, "$acc_allele_freq_file") or die;
 
 while (<V>)
 {
-	# BobWhite_mira1_c10      610     .       G       A       81      .       DP=54;VDB=0.0181;AF1=1;AC1=2;DP4=4,1,36,11;MQ=20;FQ=-90;PV4=1,5.1e-16,1,1       GT:PL:GQ        1/1:114,63,0:99
+	# tplb0059a11     1118    G_9     A_3
+	# BobWhite_mira1_s66937   119     T_20    C_10
+	
 	next if /^\#/;
 	my @t = split /\s+/,$_;
 	next if length $t[4] > 1;
@@ -31,7 +33,7 @@ while (<V>)
 	next unless exists $snps{$id};
 	my ($rf, $rb, $af, $ab) = $_=~/DP4=(\d+)\,(\d+)\,(\d+)\,(\d+)/;
 	my $total = sum($rf, $rb, $af, $ab);
-	next if $total < $mid_dep;
+	next if $total < $dp_cutoff;
 	my $ref = $rf + $rb;
 	my $alt = $af + $ab;
 	$chisq_test->load_data([[sort{$a<=>$b}($ref, $alt)], [int($total/3), int($total*2/3)]]);

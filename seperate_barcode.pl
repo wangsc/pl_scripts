@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
-
+# as fasta as seperate_barcode_fast.pl
 my $sUsage = qq(
 **********************************************************************************
 Seperate fastq files into accession-specific files based on barcode file.
@@ -78,11 +78,13 @@ sub seperate_barcodes
 		open (IN, $file) or die "can't open file $file\n";
 		my @temp_array;
 		my $index = -1;
+		my $n=0;
 		while(<IN>)
 		{
 			next if /^\s+$/;
 			chomp;
-			$index++;		
+			$index++;
+		#	$n++; print STDERR $n, "\n";
 			$temp_array[$index] = $_;
 			if($index == 3)
 			{
@@ -113,14 +115,16 @@ sub detect_barcode
 	my @return;
 	foreach my $code (@barcodes)
 	{
-		my $code_rc = rev_comp($code);
-		my $code_reverse = reverse $code;
-		my $code_rc_reverse = reverse $code_rc;
-		if($seq =~ /^$code/)# or $seq =~ /^$code_rc/ or $seq =~/$code_reverse$/ or $seq =~/$code_rc_reverse$/)
+	#	my $code_rc = rev_comp($code);
+	#	my $code_reverse = reverse $code;
+	#	my $code_rc_reverse = reverse $code_rc;
+		my $prefix_seq = substr($seq, 0, length($code));	
+		if($prefix_seq eq $code)
 		{
 			push @return, $code;
 		}
 	}
+	
 	if(@return > 1)
 	{
 		print "Two barcode for one seq: \n";

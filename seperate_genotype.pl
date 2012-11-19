@@ -5,18 +5,20 @@ my $sUsage = qq(
 perl $0
 <SNPmap.2110_final_MAGIC.csv>
 <combinedPM_mod_final_genotype_mod4.csv>
+<gruping file>
 );
 
 die $sUsage unless @ARGV;
 
-my ($map_file, $genotype_file) = @ARGV;
+my ($map_file, $genotype_file, $grp_file) = @ARGV;
 
+my %grps = read_grp_file($grp_file) if $grp_file;
 my %map_ids = read_map_file($map_file);
 my ($snp_index_hashref, $genotype_arrayref, $groups) = read_genotype_file($genotype_file);
 
 # OUTPUT
-my @chr_ids = map{$_."A", $_."B", $_."D"}(1..7);
-
+#my @chr_ids = map{$_."A", $_."B", $_."D"}(1..7);
+my @chr_ids = unique(keys %map_ids);
 my %dist_files;
 foreach my $g (@$groups)
 {	
@@ -24,6 +26,7 @@ foreach my $g (@$groups)
 	{
 		my $outfile = $g . "_" . $chr . "_genotype.out";
 		open (OUT, ">$outfile") or die "can't open file $outfile\n";
+		next unless exists $map_ids{$chr};
 		my @snpids = @{$map_ids{$chr}->[0]};
 		my @index;
 		my @snpid_index;
@@ -44,7 +47,7 @@ foreach my $g (@$groups)
 			}
 			else
 			{
-				next unless $g eq join("_", @data[1,2])
+				next unless $g eq $data[1]
 			}			
 			print OUT join("\t", @data[@index]),"\n"
 		}
@@ -75,12 +78,13 @@ sub read_map_file
 	open (IN, $file) or die;
 	while(<IN>)
 	{
-		# "1A35","wsnp_Ex_c19353_28290651","1A",38.1228643055790
+		# wsnp_Ku_c183_358844,17.31,1A,1,A,11.58846353,1
 		chomp;
 		s/\"//g;
+		next if /^Marker/i;
 		my @t = split /,/, $_;
-		push @{$return{$t[2]}->[0]}, $t[1];
-		push @{$return{$t[2]}->[1]}, join("\t", ($t[1], $t[3]));
+		push @{$return{$t[2]}->[0]}, $t[0];
+		push @{$return{$t[2]}->[1]}, join("\t", ($t[0], $t[5]));
 	}
 	close IN;
 	return %return;
@@ -95,6 +99,7 @@ sub read_genotype_file
 	my (%index_hash, @genotypes, %group_count);
 	while(<IN>)
 	{
+		# lines,groups_4,growth_habit,wsnp_AJ612027A_Ta_2_1,wsnp_AJ612027A_Ta_2_5
 		$count++;
 		chomp;
 		my @t = split /,/, $_;
@@ -112,7 +117,7 @@ sub read_genotype_file
 		}
 		else
 		{
-			$group_count{join("_", @t[1,2])}++
+			$group_count{$t[1]}++
 		}
 		push @genotypes, [@t];		
 	}	
@@ -120,9 +125,11 @@ sub read_genotype_file
 	return (\%index_hash, \@genotypes, [keys %group_count])
 }
 
-
-
-
+sub unique
+{
+	my %hash = map{$_, 1} @_;
+	return keys %hash;
+}
 
 
 

@@ -27,7 +27,7 @@ my $alignments = $sam->features(-iterator=>1);
 
 my %allele_count;
 my %ref_allele;
-my %covered_snps;
+#my %covered_snps;
 my $counter = 0;
 while(my $aln = $alignments->next_seq())
 {
@@ -39,7 +39,7 @@ while(my $aln = $alignments->next_seq())
 	next unless defined $ref_start;
 	my $ref_end = $aln->end;
 	my @snps = grep {$_>=$ref_start and $_<=$ref_end} @{$snps{$id}};
-	push @{$covered_snps{$id}}, @snps;
+	#push @{$covered_snps{$id}}, @snps;
 	my $ref_dna   = $aln->dna;
 	my $query_dna = $aln->query->dna;
 	my @qscores = $aln->qscore;
@@ -47,25 +47,27 @@ while(my $aln = $alignments->next_seq())
 	{
 		next unless $qscores[$snppos-$ref_start] >= 20;
 		$ref_allele{$id}{$snppos} = substr($ref_dna, $snppos-$ref_start, 1) unless exists $ref_allele{$id}{$snppos};
-		$allele_count{$id}{$snppos}{substr($query_dna, $snppos-$ref_start, 1)}++;
+		$allele_count{join("\t",($id,$snppos))}{substr($query_dna, $snppos-$ref_start, 1)}++;
 	}
 }
 
 # Output
 print_time_comment("Output results to file $outfile...");
-foreach my $id (keys %allele_count)
+foreach my $id (keys %ref_allele)
 {
-	my @covered_snps = @{$covered_snps{$id}};
-	foreach my $snppos (unique(@covered_snps))
+	#my @covered_snps = @{$covered_snps{$id}};
+	my @snps = @{$snps{$id}};
+	foreach my $snppos (unique(@snps))
 	{
+		next unless exists $ref_allele{$id}{$snppos};
 		print OUT $id, "\t", $snppos, "\t";
 		print OUT $ref_allele{$id}{$snppos},"_", 
-		     exists $allele_count{$id}{$snppos}{$ref_allele{$id}{$snppos}}?$allele_count{$id}{$snppos}{$ref_allele{$id}{$snppos}}:0;
-		foreach (keys %{$allele_count{$id}{$snppos}})
+		     exists $allele_count{join("\t",($id,$snppos))}{$ref_allele{$id}{$snppos}}?$allele_count{join("\t",($id,$snppos))}{$ref_allele{$id}{$snppos}}:0;
+		foreach (keys %{$allele_count{join("\t",($id,$snppos))}})
 		{
 			unless($_ eq  $ref_allele{$id}{$snppos})
 			{
-				print OUT "\t", $_,"_",exists $allele_count{$id}{$snppos}{$_}?$allele_count{$id}{$snppos}{$_}:0;
+				print OUT "\t", $_,"_",exists $allele_count{join("\t",($id,$snppos))}{$_}?$allele_count{join("\t",($id,$snppos))}{$_}:0;
 			}
 		}
 		print OUT "\n";
