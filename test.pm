@@ -1,3 +1,4 @@
+# Test package
 package Own::Test;
 
 sub new
